@@ -10,6 +10,9 @@
 ;; Channel for receiving events from Cisco
 (def cisco-event-chan (async/chan))
 
+;; Cisco API URL from environment variable
+(def cisco-api-url (System/getenv "CISCO_API_URL"))
+
 ;; Broadcasts a message to all connected clients
 (defn broadcast-to-clients [msg]
   (doseq [client @clients]
@@ -27,11 +30,18 @@
       (async/<! (async/timeout 5000)) ;; Event generated every 5 seconds
       (recur))))
 
-;; Simulates sending a command to Cisco IVR
+;; Sends a command to Cisco IVR
 (defn send-to-cisco-ivr [command]
-  (log/info "Sending to Cisco IVR:" command)
-  ;; In a real system: HTTP/WS request to Cisco API
-  {:status "success" :command command})
+  (log/info "Sending to Cisco IVR at" cisco-api-url ":" command)
+  ;; Sends HTTP request to Cisco API
+  (try
+    (let [response (http-kit/post (str cisco-api-url "/ivr")
+                                 {:body (json/generate-string command)})]
+      (log/info "Cisco response:" response)
+      {:status "success" :command command})
+    (catch Exception e
+      (log/error "Failed to send to Cisco:" (.getMessage e))
+      {:status "error" :error (.getMessage e)})))
 
 ;; WebSocket handler for client connections
 (defn ws-handler [request]
