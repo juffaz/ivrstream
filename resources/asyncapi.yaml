@@ -1,0 +1,78 @@
+asyncapi: '2.4.0'
+info:
+  title: IVRStream WebSocket API
+  version: '1.0.0'
+  description: Realtime WebSocket API for Cisco Call Center IVR integration
+servers:
+  production:
+    url: ws://localhost:8080
+    protocol: ws
+channels:
+  /ws:
+    subscribe:
+      summary: Subscribe to Cisco Call Center events
+      operationId: subscribeCallEvents
+      message:
+        contentType: application/json
+        payload:
+          oneOf:
+            - type: object
+              properties:
+                event:
+                  type: string
+                  enum: ['call_started', 'call_ended']
+                call_id:
+                  type: string
+                caller:
+                  type: string
+                timestamp:
+                  type: integer
+    publish:
+      summary: Send audio or TTS commands to Cisco IVR
+      operationId: sendCommands
+      message:
+        contentType: application/json
+        payload:
+          oneOf:
+            - type: object
+              properties:
+                event:
+                  type: string
+                  enum: ['audio']
+                payload:
+                  type: string
+                  description: Base64-encoded audio data
+            - type: object
+              properties:
+                command:
+                  type: string
+                  enum: ['say']
+                text:
+                  type: string
+                  description: Text for TTS
+components:
+  messages:
+    callEvent:
+      payload:
+        type: object
+        properties:
+          event:
+            type: string
+          call_id:
+            type: string
+          caller:
+            type: string
+          timestamp:
+            type: integer
+    command:
+      payload:
+        type: object
+        properties:
+          event:
+            type: string
+          payload:
+            type: string
+          command:
+            type: string
+          text:
+            type: string
